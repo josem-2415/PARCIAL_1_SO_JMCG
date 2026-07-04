@@ -5,50 +5,77 @@
 #include "FileManager.h"
 
 #include <fstream>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
-using namespace std;
-
-vector<Process*> FileManager::readProcesses(const string& filename)
+/**
+ * @brief Lee los procesos almacenados en un archivo de texto.
+ *
+ * El archivo debe contener la información de cada proceso
+ * con el siguiente formato:
+ *
+ * Etiqueta; Burst Time; Arrival Time; Queue
+ *
+ * Cada línea válida genera un nuevo objeto Process que será
+ * utilizado posteriormente por el Scheduler.
+ *
+ * @param filename Nombre del archivo de entrada.
+ * @return Vector con todos los procesos leídos.
+ */
+std::vector<Process*> FileManager::readProcesses(const std::string& filename)
 {
-    vector<Process*> processes;
+    std::vector<Process*> processes;
 
-    ifstream file(filename);
+    std::ifstream file(filename);
 
     if (!file.is_open())
+    {
         return processes;
+    }
 
-    string line;
+    std::string line;
 
+    /*
+     * Leer el archivo línea por línea.
+     */
     while (getline(file, line))
     {
-        if (line.empty())
+        /*
+         * Ignorar líneas vacías y comentarios.
+         */
+        if (line.empty() || line[0] == '#')
             continue;
 
-        if (line[0] == '#')
-            continue;
+        std::stringstream ss(line);
 
-        stringstream ss(line);
+        std::string id;
+        std::string token;
 
-        string id;
-        string bt;
-        string at;
-        string q;
+        int burstTime;
+        int arrivalTime;
+        int queue;
 
         getline(ss, id, ';');
-        getline(ss, bt, ';');
-        getline(ss, at, ';');
-        getline(ss, q, ';');
 
-        Process* process = new Process(
-            id,
-            stoi(bt),
-            stoi(at),
-            stoi(q)
-        );
+        getline(ss, token, ';');
+        burstTime = stoi(token);
 
-        processes.push_back(process);
+        getline(ss, token, ';');
+        arrivalTime = stoi(token);
+
+        getline(ss, token, ';');
+        queue = stoi(token);
+
+        /*
+         * Crear el nuevo proceso e incorporarlo
+         * al vector.
+         */
+        processes.push_back(
+            new Process(
+                id,
+                burstTime,
+                arrivalTime,
+                queue));
     }
 
     file.close();
@@ -56,15 +83,34 @@ vector<Process*> FileManager::readProcesses(const string& filename)
     return processes;
 }
 
-void FileManager::writeResults(const string& filename,
-                               const vector<Process*>& processes)
+/**
+ * @brief Escribe los resultados obtenidos por la simulación.
+ *
+ * Para cada proceso se almacenan:
+ *
+ * • Waiting Time (WT)
+ * • Completion Time (CT)
+ * • Response Time (RT)
+ * • Turnaround Time (TAT)
+ *
+ * Además, al final del archivo se calculan y escriben
+ * los promedios de cada una de estas métricas.
+ *
+ * @param filename Archivo donde se escribirán los resultados.
+ * @param processes Procesos finalizados.
+ */
+void FileManager::writeResults(
+    const std::string& filename,
+    const std::vector<Process*>& processes)
 {
-    ofstream file(filename);
+    std::ofstream file(filename);
 
     if (!file.is_open())
+    {
         return;
+    }
 
-    file << "# Archivo: mlq001.txt\n";
+    file << "# Archivo: " << filename << "\n";
     file << "# etiqueta; BT; AT; Q; WT; CT; RT; TAT\n";
 
     double totalWT = 0;
@@ -72,6 +118,11 @@ void FileManager::writeResults(const string& filename,
     double totalRT = 0;
     double totalTAT = 0;
 
+    /*
+     * Escribir la información de cada proceso
+     * y acumular las métricas para calcular
+     * los promedios.
+     */
     for (Process* process : processes)
     {
         file
@@ -91,17 +142,21 @@ void FileManager::writeResults(const string& filename,
         totalTAT += process->getTurnaroundTime();
     }
 
+    /*
+     * Calcular los promedios de las métricas.
+     */
     int n = processes.size();
 
     if (n > 0)
     {
-        file << fixed << setprecision(1);
+        file << std::fixed << std::setprecision(1);
 
-        file << "# WT=" << totalWT / n
-             << "; CT=" << totalCT / n
-             << "; RT=" << totalRT / n
-             << "; TAT=" << totalTAT / n
-             << ";";
+        file
+            << "# WT=" << totalWT / n
+            << "; CT=" << totalCT / n
+            << "; RT=" << totalRT / n
+            << "; TAT=" << totalTAT / n
+            << ";";
     }
 
     file.close();

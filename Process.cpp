@@ -2,8 +2,18 @@
 // Created by jcard on 3/07/2026.
 //
 
+//
+// Created by jcard on 3/07/2026.
+//
+
 #include "Process.h"
 
+/**
+ * Constructor por defecto.
+ *
+ * Inicializa todos los atributos del proceso con valores
+ * predeterminados para evitar datos sin inicializar.
+ */
 Process::Process()
 {
     id = "";
@@ -22,6 +32,12 @@ Process::Process()
     admitted = false;
 }
 
+/**
+ * Constructor parametrizado.
+ *
+ * Inicializa el proceso con la información leída desde el archivo
+ * de entrada. El tiempo restante comienza siendo igual al Burst Time.
+ */
 Process::Process(std::string id,
                  int burstTime,
                  int arrivalTime,
@@ -32,6 +48,7 @@ Process::Process(std::string id,
     this->arrivalTime = arrivalTime;
     this->queue = queue;
 
+    // Al inicio aún no se ha ejecutado ninguna unidad de CPU.
     remainingTime = burstTime;
 
     waitingTime = 0;
@@ -43,9 +60,10 @@ Process::Process(std::string id,
     admitted = false;
 }
 
-//=====================
-// Getters
-//=====================
+//======================================================
+// Métodos Getters
+// Permiten consultar la información del proceso.
+//======================================================
 
 std::string Process::getId() const
 {
@@ -102,9 +120,11 @@ bool Process::isAdmitted() const
     return admitted;
 }
 
-//=====================
-// Setters
-//=====================
+//======================================================
+// Métodos Setters
+// Permiten actualizar las métricas calculadas durante
+// la simulación del algoritmo MLQ.
+//======================================================
 
 void Process::setRemainingTime(int remainingTime)
 {
